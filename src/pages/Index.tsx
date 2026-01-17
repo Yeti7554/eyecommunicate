@@ -1,20 +1,45 @@
 import { useState } from 'react';
-import { FileText, MessageCircle, Sparkles } from 'lucide-react';
+import { FileText, MessageCircle, Sparkles, AlertCircle } from 'lucide-react';
 import { UsernameInput } from '@/components/UsernameInput';
 import { ContentSection } from '@/components/ContentSection';
-import { mockPosts, mockComments } from '@/data/mockData';
+import { twitterApi } from '@/lib/api/twitter';
+import { TwitterPost } from '@/types/twitter';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [posts, setPosts] = useState<TwitterPost[]>([]);
+  const [comments, setComments] = useState<TwitterPost[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleUsernameSubmit = (submittedUsername: string) => {
+  const handleUsernameSubmit = async (submittedUsername: string) => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setUsername(submittedUsername);
+    setError(null);
+    
+    try {
+      const response = await twitterApi.scrapeProfile(submittedUsername);
+      
+      if (response.success && response.data) {
+        const allPosts = response.data.posts;
+        const userPosts = allPosts.filter(p => !p.isComment);
+        const userComments = allPosts.filter(p => p.isComment);
+        
+        setPosts(userPosts);
+        setComments(userComments);
+        setUsername(response.data.username);
+        toast.success(`Found ${allPosts.length} posts for @${response.data.username}`);
+      } else {
+        setError(response.error || 'Failed to fetch profile data');
+        toast.error(response.error || 'Failed to scrape profile');
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      setError('Failed to connect to the server');
+      toast.error('Failed to connect to the server');
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -56,20 +81,42 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Error State */}
+      {error && (
+        <div className="max-w-5xl mx-auto px-6 py-8">
+          <div className="p-4 rounded-xl border border-destructive/50 bg-destructive/10 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <p className="text-destructive">{error}</p>
+          </div>
+        </div>
+      )}
+
       {/* Results Sections */}
-      {username && (
+      {username && !error && (
         <main className="max-w-5xl mx-auto px-6 py-12 space-y-16">
-          <ContentSection
-            title="Your Posts"
-            icon={<FileText className="w-5 h-5" />}
-            posts={mockPosts}
-          />
+          {posts.length > 0 && (
+            <ContentSection
+              title="Your Posts"
+              icon={<FileText className="w-5 h-5" />}
+              posts={posts}
+            />
+          )}
           
-          <ContentSection
-            title="Your Comments"
-            icon={<MessageCircle className="w-5 h-5" />}
-            posts={mockComments}
-          />
+          {comments.length > 0 && (
+            <ContentSection
+              title="Your Comments"
+              icon={<MessageCircle className="w-5 h-5" />}
+              posts={comments}
+            />
+          )}
+          
+          {posts.length === 0 && comments.length === 0 && (
+            <div className="p-8 rounded-2xl border border-dashed border-border text-center">
+              <p className="text-muted-foreground">
+                No posts found. X/Twitter may be blocking the scraper. Try again later.
+              </p>
+            </div>
+          )}
         </main>
       )}
 
