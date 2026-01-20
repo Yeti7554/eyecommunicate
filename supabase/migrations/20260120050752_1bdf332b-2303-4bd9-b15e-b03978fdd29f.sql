@@ -1,5 +1,9 @@
 -- Create enum for game status
-CREATE TYPE public.game_status AS ENUM ('setup', 'active', 'paused', 'ended');
+DO $$ BEGIN
+    CREATE TYPE public.game_status AS ENUM ('setup', 'active', 'paused', 'ended');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Create games table
 CREATE TABLE public.games (

@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      saved_players: {
+        Row: {
+          created_at: string
+          email: string | null
+          host_id: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          host_id: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          host_id?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       eliminations: {
         Row: {
           created_at: string
@@ -64,6 +88,7 @@ export type Database = {
         Row: {
           code: string
           created_at: string
+          duration_hours: number | null
           elimination_method: string
           ended_at: string | null
           host_id: string
@@ -78,6 +103,7 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string
+          duration_hours?: number | null
           elimination_method?: string
           ended_at?: string | null
           host_id: string
@@ -92,6 +118,7 @@ export type Database = {
         Update: {
           code?: string
           created_at?: string
+          duration_hours?: number | null
           elimination_method?: string
           ended_at?: string | null
           host_id?: string
@@ -109,9 +136,11 @@ export type Database = {
         Row: {
           created_at: string
           eliminated_at: string | null
+          email: string | null
           game_id: string
           id: string
           is_alive: boolean
+          kill_word: string
           name: string
           reveal_order: number | null
           secret_code: string
@@ -120,9 +149,11 @@ export type Database = {
         Insert: {
           created_at?: string
           eliminated_at?: string | null
+          email?: string | null
           game_id: string
           id?: string
           is_alive?: boolean
+          kill_word?: string
           name: string
           reveal_order?: number | null
           secret_code?: string
@@ -131,9 +162,11 @@ export type Database = {
         Update: {
           created_at?: string
           eliminated_at?: string | null
+          email?: string | null
           game_id?: string
           id?: string
           is_alive?: boolean
+          kill_word?: string
           name?: string
           reveal_order?: number | null
           secret_code?: string
@@ -161,7 +194,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      eliminate_player: { Args: { game_uuid: string; eliminator_uuid: string; eliminated_uuid: string }; Returns: boolean }
       generate_game_code: { Args: never; Returns: string }
+      generate_kill_word: { Args: never; Returns: string }
+      start_game: { Args: { game_uuid: string }; Returns: boolean }
     }
     Enums: {
       game_status: "setup" | "active" | "paused" | "ended"
