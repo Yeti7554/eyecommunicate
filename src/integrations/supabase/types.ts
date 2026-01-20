@@ -14,16 +14,157 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      eliminations: {
+        Row: {
+          created_at: string
+          eliminated_id: string
+          eliminator_id: string
+          game_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          eliminated_id: string
+          eliminator_id: string
+          game_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          eliminated_id?: string
+          eliminator_id?: string
+          game_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eliminations_eliminated_id_fkey"
+            columns: ["eliminated_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eliminations_eliminator_id_fkey"
+            columns: ["eliminator_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eliminations_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      games: {
+        Row: {
+          code: string
+          created_at: string
+          elimination_method: string
+          ended_at: string | null
+          host_id: string
+          id: string
+          name: string
+          safe_times: string | null
+          safe_zones: string | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["game_status"]
+          winner_id: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          elimination_method?: string
+          ended_at?: string | null
+          host_id: string
+          id?: string
+          name: string
+          safe_times?: string | null
+          safe_zones?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          winner_id?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          elimination_method?: string
+          ended_at?: string | null
+          host_id?: string
+          id?: string
+          name?: string
+          safe_times?: string | null
+          safe_zones?: string | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          winner_id?: string | null
+        }
+        Relationships: []
+      }
+      players: {
+        Row: {
+          created_at: string
+          eliminated_at: string | null
+          game_id: string
+          id: string
+          is_alive: boolean
+          name: string
+          reveal_order: number | null
+          secret_code: string
+          target_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          eliminated_at?: string | null
+          game_id: string
+          id?: string
+          is_alive?: boolean
+          name: string
+          reveal_order?: number | null
+          secret_code?: string
+          target_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          eliminated_at?: string | null
+          game_id?: string
+          id?: string
+          is_alive?: boolean
+          name?: string
+          reveal_order?: number | null
+          secret_code?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "players_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_game_code: { Args: never; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      game_status: "setup" | "active" | "paused" | "ended"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +291,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      game_status: ["setup", "active", "paused", "ended"],
+    },
   },
 } as const
