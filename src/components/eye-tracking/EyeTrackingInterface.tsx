@@ -5,13 +5,34 @@ import { SelectionZone } from './SelectionZone';
 import { NeutralZone } from './NeutralZone';
 import { LoadingScreen } from './LoadingScreen';
 import { ErrorScreen } from './ErrorScreen';
+import { MobileEyeTrackingInterface } from './MobileEyeTrackingInterface';
 
 const NEUTRAL_ZONE_WIDTH_PERCENT = 0.5;
 
 export function EyeTrackingInterface() {
   const [selectionsPaused, setSelectionsPaused] = useState(false);
+  const [isMobileMode, setIsMobileMode] = useState(false);
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
   const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused);
+
+  // Auto-detect mobile mode based on device and orientation
+  useEffect(() => {
+    const checkMobileMode = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isSmallScreen = window.innerWidth < 1024; // Allow tablets in portrait
+      const isMobile = isMobileDevice || (isSmallScreen && window.innerHeight > window.innerWidth); // Portrait mode on small screens
+
+      setIsMobileMode(isMobile);
+    };
+
+    checkMobileMode();
+    window.addEventListener('resize', checkMobileMode);
+    window.addEventListener('orientationchange', checkMobileMode);
+    return () => {
+      window.removeEventListener('resize', checkMobileMode);
+      window.removeEventListener('orientationchange', checkMobileMode);
+    };
+  }, []);
 
   if (error) {
     return <ErrorScreen error={error} />;
@@ -25,6 +46,11 @@ export function EyeTrackingInterface() {
   const isNoActive = gazeState === 'LOOKING_AT_NO' && selectionState === 'dwelling';
   const isYesSelected = selectedOption === 'YES';
   const isNoSelected = selectedOption === 'NO';
+
+  // Render mobile or desktop version based on screen size/device
+  if (isMobileMode) {
+    return <MobileEyeTrackingInterface />;
+  }
 
   return (
     <div className="fixed inset-0 flex flex-row overflow-hidden select-none cursor-none">
@@ -60,7 +86,7 @@ export function EyeTrackingInterface() {
           <div>Gaze: ({Math.round(gazePosition.x)}, {Math.round(gazePosition.y)})</div>
         )}
         <div className="mt-1 text-xs text-gray-300">
-          Calibration: X-flip={getCoordinateFlipping().x ? 'ON' : 'OFF'}
+          Mode: Desktop | Calibration: X-flip={getCoordinateFlipping().x ? 'ON' : 'OFF'}
           <br />
           Selections: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}
         </div>
@@ -114,6 +140,12 @@ export function EyeTrackingInterface() {
           className="mt-2 mr-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs"
         >
           Test Zone
+        </button>
+        <button
+          onClick={() => setIsMobileMode(!isMobileMode)}
+          className={`mt-2 mr-1 px-2 py-1 rounded text-xs ${isMobileMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+        >
+          {isMobileMode ? 'Desktop Mode' : 'Mobile Mode'}
         </button>
         <button
           onClick={() => {
