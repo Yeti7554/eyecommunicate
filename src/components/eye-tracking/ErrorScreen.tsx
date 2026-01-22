@@ -42,7 +42,7 @@ export function ErrorScreen({ error }: ErrorScreenProps) {
         
         <div className="flex flex-col items-center gap-4 mt-4">
           <p className="text-sm text-muted-foreground">
-            To use EyeYesNo, please:
+            To use EyeCommunicate, please:
           </p>
           <ol className="text-left text-muted-foreground space-y-2">
             <li>1. Click the camera icon in your browser's address bar</li>

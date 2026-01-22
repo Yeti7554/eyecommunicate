@@ -30,10 +30,10 @@ export function StartScreen({ onStart }: StartScreenProps) {
         
         <div className="flex flex-col items-center gap-4">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
-            EyeYesNo
+            EyeCommunicate
           </h1>
           <p className="text-xl text-muted-foreground">
-            Answer YES or NO using only your eyes
+            Communicate YES or NO using only your eyes
           </p>
         </div>
         
