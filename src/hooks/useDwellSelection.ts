@@ -12,8 +12,8 @@ interface UseDwellSelectionReturn {
 }
 
 // Configuration constants
-const DWELL_TIME_MS = 250; // Ultra-sensitive - quick selections
-const COOLDOWN_MS = 300; // Fast recovery
+const DWELL_TIME_MS = 2000; // 2-second dwell time for deliberate selections
+const COOLDOWN_MS = 200; // Very short cooldown - allow quick repeated selections
 
 export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn {
   const [selectionState, setSelectionState] = useState<SelectionState>('idle');
@@ -29,24 +29,37 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
   const lastZoneRef = useRef<'YES' | 'NO' | 'NEUTRAL'>('NEUTRAL');
 
   const speak = useCallback((text: string, priority: boolean = false) => {
+    console.log(`🎤 Attempting to speak: "${text}" (priority: ${priority})`);
+
+    // Check if speech synthesis is available
+    if (!('speechSynthesis' in window)) {
+      console.error('❌ Speech synthesis not supported');
+      return;
+    }
+
     try {
-      // Cancel any ongoing speech for high priority messages
-      if (priority) {
+      // For selections, always cancel previous speech and speak clearly
+      if (!priority) {
         window.speechSynthesis.cancel();
       }
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = priority ? 1.2 : 1.0; // Faster for priority
-      utterance.pitch = 1.1; // Slightly higher pitch
-      utterance.volume = 0.8; // Good volume level
+      utterance.volume = 1.0; // Full volume
+      utterance.rate = priority ? 1.5 : 0.8; // Fast for zone entry, slow/clear for selections
+      utterance.pitch = priority ? 1.3 : 0.9; // Higher pitch for zones, normal for selections
 
-      // Add event listeners for debugging
-      utterance.onstart = () => console.log(`Speaking: "${text}"`);
-      utterance.onerror = (e) => console.error('Speech error:', e);
+      // Add comprehensive event listeners
+      utterance.onstart = () => console.log(`✅ Started speaking: "${text}"`);
+      utterance.onend = () => console.log(`🏁 Finished speaking: "${text}"`);
+      utterance.onerror = (e) => console.error('❌ Speech error for "${text}":', e);
+      utterance.onpause = () => console.log(`⏸️ Paused speaking: "${text}"`);
+      utterance.onresume = () => console.log(`▶️ Resumed speaking: "${text}"`);
 
+      console.log(`📢 Speaking "${text}" with rate=${utterance.rate}, pitch=${utterance.pitch}`);
       window.speechSynthesis.speak(utterance);
+
     } catch (error) {
-      console.error('Speech synthesis failed:', error);
+      console.error('❌ Speech synthesis failed:', error);
     }
   }, []);
 
@@ -64,22 +77,7 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         newZone = 'NEUTRAL';
     }
 
-    // Voice feedback when entering YES/NO zones - ultra responsive
-    if (newZone !== lastZoneRef.current && newZone !== 'NEUTRAL') {
-      console.log(`🎯 ENTERING ${newZone} ZONE - VOICE FEEDBACK TRIGGERED`);
-      // Cancel any ongoing speech for instant feedback
-      window.speechSynthesis.cancel();
-      try {
-        const utterance = new SpeechSynthesisUtterance(newZone.toLowerCase());
-        utterance.volume = 1;
-        utterance.rate = 2.0; // Ultra fast
-        utterance.pitch = 1.3; // Very distinctive
-        window.speechSynthesis.speak(utterance);
-        console.log(`✅ Instant speech synthesis for: ${newZone.toLowerCase()}`);
-      } catch (error) {
-        console.error('❌ Speech synthesis failed:', error);
-      }
-    }
+    // No voice feedback when entering zones - only on selection
 
     setCurrentZone(newZone);
     lastZoneRef.current = newZone;
@@ -99,27 +97,34 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
   }, []);
 
   const handleSelection = useCallback((option: 'YES' | 'NO') => {
+    console.log(`🎯 SELECTION TRIGGERED: ${option} after ${DWELL_TIME_MS}ms dwell`);
+
     setSelectionState('selected');
     setSelectedOption(option);
     setDwellProgress(1);
-    
-    // Speak the selection
-    speak(option);
-    
-    // Mark that re-arm is required (user must look away before next selection)
-    rearmRequiredRef.current = true;
-    
+
+    // Speak the selection with clear, distinctive audio
+    console.log(`🔊 Speaking selection: ${option}`);
+    speak(option, false); // false = selection speech (not priority)
+
+    // Allow immediate reselection - no re-arm requirement
+    rearmRequiredRef.current = false;
+
     // Enter cooldown after showing selection
     cooldownTimeoutRef.current = setTimeout(() => {
+      console.log('⏳ Entering cooldown phase');
       setSelectionState('cooldown');
-      
+
       cooldownTimeoutRef.current = setTimeout(() => {
+        console.log('🔄 Reset to idle state - ready for next selection');
         setSelectionState('idle');
         setSelectedOption(null);
         setDwellProgress(0);
         dwellStartTimeRef.current = null;
+        // Allow immediate reselection
+        rearmRequiredRef.current = false;
       }, COOLDOWN_MS);
-    }, 1000); // Show selection for 1 second before cooldown
+    }, 500); // Show selection for 0.5 seconds before cooldown
   }, [speak]);
 
   useEffect(() => {
@@ -133,7 +138,10 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         const progress = Math.min(elapsed / DWELL_TIME_MS, 1);
         setDwellProgress(progress);
 
+        console.log(`⏱️ Dwell progress: ${(progress * 100).toFixed(1)}% (${elapsed}ms / ${DWELL_TIME_MS}ms)`);
+
         if (progress >= 1) {
+          console.log('🎯 Dwell complete! Triggering selection.');
           const option = lastGazeStateRef.current === 'LOOKING_AT_YES' ? 'YES' : 'NO';
           handleSelection(option);
         } else {
@@ -152,7 +160,7 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
       const isLookingAtOption = gazeState === 'LOOKING_AT_YES' || gazeState === 'LOOKING_AT_NO';
       const gazeChanged = gazeState !== lastGazeStateRef.current;
       
-      // Check if user looked away (for re-arming)
+      // Reset rearm requirement when looking at neutral
       if (gazeState === 'LOOKING_AT_NEITHER') {
         rearmRequiredRef.current = false;
       }
@@ -160,15 +168,17 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
       if (isLookingAtOption && !rearmRequiredRef.current) {
         if (gazeChanged || selectionState === 'idle') {
           // Start or restart dwell timer
+          console.log(`👀 Starting dwell timer for ${lastGazeStateRef.current}`);
           dwellStartTimeRef.current = Date.now();
           setSelectionState('dwelling');
           setDwellProgress(0);
         }
-        
+
         // Continue updating progress
         animationFrameRef.current = requestAnimationFrame(updateDwellProgress);
       } else if (!isLookingAtOption && selectionState === 'dwelling') {
         // Gaze left the region, reset dwell
+        console.log('👋 Gaze left zone, resetting dwell');
         setSelectionState('idle');
         setDwellProgress(0);
         dwellStartTimeRef.current = null;
