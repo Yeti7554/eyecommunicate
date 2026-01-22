@@ -107,7 +107,17 @@ export function useWebGazer(): UseWebGazerReturn {
     const initWebGazer = async () => {
       try {
         setIsLoading(true);
-        
+
+        // Check for iOS Safari compatibility issues
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isIOSSafari = isIOS && isSafari;
+
+        if (isIOSSafari) {
+          console.warn('iOS Safari detected - WebGazer may have limited functionality');
+          // WebGazer has known issues on iOS Safari, but we'll still try
+        }
+
         // Dynamically import webgazer
         const webgazer = await import('webgazer');
         webgazerRef.current = webgazer.default;
@@ -119,8 +129,18 @@ export function useWebGazer(): UseWebGazerReturn {
           .showPredictionPoints(false)  // Hide prediction points for clean interface
           .showFaceOverlay(false)  // Hide face overlay for cleaner UI
           .showFaceFeedbackBox(false)  // Hide feedback box
-          .setTracker('TFFacemesh')  // Use TensorFlow face mesh for pupil tracking
-          .setGazeListener(null); // Clear any existing listener first
+          .setTracker('TFFacemesh');  // Use TensorFlow face mesh for pupil tracking
+
+        // iOS Safari specific optimizations
+        if (isIOSSafari) {
+          console.log('Applying iOS Safari optimizations...');
+          // WebGazer may need different settings for iOS
+          webgazerRef.current
+            .setRegression('weightedRidge')  // Alternative regression for iOS
+            .setTracker('clmtrackr');  // Alternative tracker that may work better on iOS
+        }
+
+        webgazerRef.current.setGazeListener(null); // Clear any existing listener first
         
         // Set gaze listener
         webgazerRef.current.setGazeListener((data: any, clock: any) => {

@@ -6,8 +6,16 @@ export function MobileEyeTrackingInterface() {
   const [selectionsPaused, setSelectionsPaused] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isLandscapeLeft, setIsLandscapeLeft] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
   const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused, voiceEnabled);
+
+  // Detect iOS devices
+  useEffect(() => {
+    const iosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    setIsIOS(iosDevice);
+  }, []);
 
   // Detect orientation changes
   useEffect(() => {
@@ -97,7 +105,14 @@ export function MobileEyeTrackingInterface() {
         {/* Mobile Debug Panel - Bottom (Landscape) */}
         <div className="h-20 bg-gray-900 p-2 text-white text-xs border-t border-gray-700">
           <div className="flex justify-between items-center mb-2">
-            <div className="text-sm font-bold">Mobile Eye Tracking - Landscape</div>
+            <div>
+              <div className="text-sm font-bold">Mobile Eye Tracking - Landscape</div>
+              {isIOS && (
+                <div className="text-yellow-400 text-xs">
+                  ⚠️ iOS Safari has limited eye tracking support
+                </div>
+              )}
+            </div>
             <div className="flex gap-2 text-xs">
               <span>Status: {isInitialized ? 'Active' : 'Init'}</span>
               <span>Zone: {currentZone}</span>
@@ -186,6 +201,81 @@ export function MobileEyeTrackingInterface() {
     );
   }
 
+  // iOS Fallback: Touch-based controls if eye tracking fails
+  if (isIOS && !isInitialized && !isLoading) {
+    return (
+      <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center p-4">
+        <div className="text-center mb-8">
+          <div className="text-2xl font-bold mb-4">iOS Eye Tracking Limited</div>
+          <div className="text-gray-300 mb-6">
+            WebGazer has limited support on iOS Safari.<br/>
+            Try using touch controls instead:
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-4 w-full max-w-xs">
+          <button
+            onClick={() => {
+              // Simulate YES selection
+              console.log('Touch YES selected');
+              if (voiceEnabled) {
+                try {
+                  const utterance = new SpeechSynthesisUtterance('YES');
+                  window.speechSynthesis.speak(utterance);
+                } catch (e) {
+                  console.error('Speech failed:', e);
+                }
+              }
+            }}
+            className="bg-green-600 hover:bg-green-700 text-white py-6 px-4 rounded-lg text-xl font-bold transition-colors"
+          >
+            ✅ YES
+          </button>
+
+          <button
+            onClick={() => {
+              // Simulate NO selection
+              console.log('Touch NO selected');
+              if (voiceEnabled) {
+                try {
+                  const utterance = new SpeechSynthesisUtterance('NO');
+                  window.speechSynthesis.speak(utterance);
+                } catch (e) {
+                  console.error('Speech failed:', e);
+                }
+              }
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white py-6 px-4 rounded-lg text-xl font-bold transition-colors"
+          >
+            ❌ NO
+          </button>
+
+          <div className="flex gap-2 mt-4">
+            <button
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className={`flex-1 py-2 px-3 rounded text-sm ${voiceEnabled ? 'bg-green-600' : 'bg-gray-600'}`}
+            >
+              Voice: {voiceEnabled ? 'ON' : 'OFF'}
+            </button>
+            <button
+              onClick={() => setIsIOS(false)} // Allow trying eye tracking anyway
+              className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+            >
+              Try Eye Tracking
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-8 text-center text-sm text-gray-400">
+          <div>iOS Safari Limitations:</div>
+          <div>• Reduced camera access</div>
+          <div>• Limited WebGL support</div>
+          <div>• Alternative browsers may work better</div>
+        </div>
+      </div>
+    );
+  }
+
   // Portrait mode (default) - debug panel on left
   return (
     <div className="fixed inset-0 flex flex-row bg-black overflow-hidden select-none cursor-none">
@@ -193,12 +283,18 @@ export function MobileEyeTrackingInterface() {
       <div className="w-32 bg-gray-900 flex flex-col justify-center items-center p-2 text-white text-xs border-r border-gray-700 z-30">
         <div className="text-center mb-4 transform -rotate-90 whitespace-nowrap">
           Mobile Eye Tracking
+          {isIOS && (
+            <div className="text-yellow-400 text-xs mt-2 transform rotate-90">
+              ⚠️ iOS Limited
+            </div>
+          )}
         </div>
 
         <div className="space-y-2 transform -rotate-90">
           <div>Status: {isInitialized ? 'Active' : 'Init'}</div>
           <div>Zone: {currentZone}</div>
           <div>Mode: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}</div>
+          {isIOS && <div className="text-yellow-400 text-xs">iOS Mode</div>}
         </div>
 
         <div className="space-y-1 mt-4 transform -rotate-90">
