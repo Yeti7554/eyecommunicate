@@ -6,7 +6,7 @@ import { NeutralZone } from './NeutralZone';
 import { LoadingScreen } from './LoadingScreen';
 import { ErrorScreen } from './ErrorScreen';
 
-const NEUTRAL_ZONE_WIDTH_PERCENT = 2;
+const NEUTRAL_ZONE_WIDTH_PERCENT = 0.5;
 
 export function EyeTrackingInterface() {
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
@@ -27,10 +27,6 @@ export function EyeTrackingInterface() {
 
   return (
     <div className="fixed inset-0 flex flex-row overflow-hidden select-none cursor-none">
-      {/* Camera Video Feed */}
-      <div id="webgazerVideoContainer" className="absolute top-4 right-4 w-48 h-36 bg-black rounded-lg overflow-hidden z-40 border border-white/20">
-        <div id="webgazerVideoFeed" className="w-full h-full"></div>
-      </div>
 
       {/* Mirror Toggle Button - Prominent and Clear */}
       <div className="absolute top-4 right-64 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg z-40 shadow-lg border-2 border-red-400">

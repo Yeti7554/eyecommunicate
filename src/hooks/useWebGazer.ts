@@ -23,9 +23,9 @@ interface UseWebGazerReturn {
 }
 
 // Configuration constants
-const SMOOTHING_WINDOW = 1; // Maximum responsiveness - no smoothing
-const NEUTRAL_ZONE_WIDTH = 0.02; // 2% neutral zone - minimal black bars
-const MIN_CONFIDENCE = 0.05; // Maximum sensitivity
+const SMOOTHING_WINDOW = 1; // No smoothing for maximum sensitivity
+const NEUTRAL_ZONE_WIDTH = 0.005; // 0.5% neutral zone - ultra-sensitive
+const MIN_CONFIDENCE = 0.01; // Maximum sensitivity - almost no filtering
 
 // Runtime coordinate system calibration
 let flipXCoordinates = false; // Flip X axis (left/right inversion fix) - DISABLED for centering test
@@ -115,8 +115,8 @@ export function useWebGazer(): UseWebGazerReturn {
         // Configure webgazer for accurate pupil-based eye tracking
         webgazerRef.current
           .setRegression('ridge')  // Ridge regression for better accuracy
-          .showVideoPreview(true)  // Show camera feed
-          .showPredictionPoints(true)  // Show gaze prediction points
+          .showVideoPreview(false)  // Hide camera feed for clean interface
+          .showPredictionPoints(false)  // Hide prediction points for clean interface
           .showFaceOverlay(false)  // Hide face overlay for cleaner UI
           .showFaceFeedbackBox(false)  // Hide feedback box
           .setTracker('TFFacemesh')  // Use TensorFlow face mesh for pupil tracking
