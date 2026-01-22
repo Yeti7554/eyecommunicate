@@ -14,193 +14,16 @@ export type Database = {
   }
   public: {
     Tables: {
-      saved_players: {
-        Row: {
-          created_at: string
-          email: string | null
-          host_id: string
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          email?: string | null
-          host_id: string
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          email?: string | null
-          host_id?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
-      eliminations: {
-        Row: {
-          created_at: string
-          eliminated_id: string
-          eliminator_id: string
-          game_id: string
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          eliminated_id: string
-          eliminator_id: string
-          game_id: string
-          id?: string
-        }
-        Update: {
-          created_at?: string
-          eliminated_id?: string
-          eliminator_id?: string
-          game_id?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "eliminations_eliminated_id_fkey"
-            columns: ["eliminated_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eliminations_eliminator_id_fkey"
-            columns: ["eliminator_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eliminations_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      games: {
-        Row: {
-          code: string
-          created_at: string
-          duration_hours: number | null
-          elimination_method: string
-          ended_at: string | null
-          host_id: string
-          id: string
-          name: string
-          safe_times: string | null
-          safe_zones: string | null
-          started_at: string | null
-          status: Database["public"]["Enums"]["game_status"]
-          winner_id: string | null
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          duration_hours?: number | null
-          elimination_method?: string
-          ended_at?: string | null
-          host_id: string
-          id?: string
-          name: string
-          safe_times?: string | null
-          safe_zones?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["game_status"]
-          winner_id?: string | null
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          duration_hours?: number | null
-          elimination_method?: string
-          ended_at?: string | null
-          host_id?: string
-          id?: string
-          name?: string
-          safe_times?: string | null
-          safe_zones?: string | null
-          started_at?: string | null
-          status?: Database["public"]["Enums"]["game_status"]
-          winner_id?: string | null
-        }
-        Relationships: []
-      }
-      players: {
-        Row: {
-          created_at: string
-          eliminated_at: string | null
-          email: string | null
-          game_id: string
-          id: string
-          is_alive: boolean
-          kill_word: string
-          name: string
-          reveal_order: number | null
-          secret_code: string
-          target_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          eliminated_at?: string | null
-          email?: string | null
-          game_id: string
-          id?: string
-          is_alive?: boolean
-          kill_word?: string
-          name: string
-          reveal_order?: number | null
-          secret_code?: string
-          target_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          eliminated_at?: string | null
-          email?: string | null
-          game_id?: string
-          id?: string
-          is_alive?: boolean
-          kill_word?: string
-          name?: string
-          reveal_order?: number | null
-          secret_code?: string
-          target_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "players_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "players_target_id_fkey"
-            columns: ["target_id"]
-            isOneToOne: false
-            referencedRelation: "players"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      eliminate_player: { Args: { game_uuid: string; eliminator_uuid: string; eliminated_uuid: string }; Returns: boolean }
-      generate_game_code: { Args: never; Returns: string }
-      generate_kill_word: { Args: never; Returns: string }
-      start_game: { Args: { game_uuid: string }; Returns: boolean }
+      [_ in never]: never
     }
     Enums: {
-      game_status: "setup" | "active" | "paused" | "ended"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -327,8 +150,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      game_status: ["setup", "active", "paused", "ended"],
-    },
+    Enums: {},
   },
 } as const

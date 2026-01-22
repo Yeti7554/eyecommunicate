@@ -1,38 +1,20 @@
 import { useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { AuthScreen } from '@/components/auth/AuthScreen';
-import { HostDashboard } from '@/components/game/HostDashboard';
+import { useFullscreen } from '@/hooks/useFullscreen';
+import { StartScreen } from '@/components/eye-tracking/StartScreen';
+import { EyeTrackingInterface } from '@/components/eye-tracking/EyeTrackingInterface';
 
-const Index = () => {
-  const { user, loading, signInWithEmail, signInWithPhone, signInWithGoogle, signInWithApple } = useAuth();
+export default function Index() {
+  const [hasStarted, setHasStarted] = useState(false);
+  const { enterFullscreen } = useFullscreen();
 
-  console.log('Index render:', { user: user?.email, loading, userExists: !!user });
+  const handleStart = async () => {
+    await enterFullscreen();
+    setHasStarted(true);
+  };
 
-  if (loading) {
-    console.log('Showing loading spinner because loading =', loading);
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+  if (!hasStarted) {
+    return <StartScreen onStart={handleStart} />;
   }
 
-  console.log('Loading is false, user =', user);
-
-  if (!user) {
-    console.log('No user, showing auth screen');
-    return (
-      <AuthScreen
-        onSignInEmail={signInWithEmail}
-        onSignInPhone={signInWithPhone}
-        onSignInGoogle={signInWithGoogle}
-        onSignInApple={signInWithApple}
-      />
-    );
-  }
-
-  console.log('User exists, showing dashboard');
-  return <HostDashboard />;
-};
-
-export default Index;
+  return <EyeTrackingInterface />;
+}
