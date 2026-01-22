@@ -15,7 +15,7 @@ interface UseDwellSelectionReturn {
 const DWELL_TIME_MS = 2000; // 2-second dwell time for deliberate selections
 const COOLDOWN_MS = 200; // Very short cooldown - allow quick repeated selections
 
-export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn {
+export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolean = false): UseDwellSelectionReturn {
   const [selectionState, setSelectionState] = useState<SelectionState>('idle');
   const [selectedOption, setSelectedOption] = useState<'YES' | 'NO' | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
@@ -99,6 +99,11 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
   const handleSelection = useCallback((option: 'YES' | 'NO') => {
     console.log(`🎯 SELECTION TRIGGERED: ${option} after ${DWELL_TIME_MS}ms dwell`);
 
+    if (selectionsPaused) {
+      console.log('⏸️ Selections paused - skipping selection and voice');
+      return;
+    }
+
     setSelectionState('selected');
     setSelectedOption(option);
     setDwellProgress(1);
@@ -125,7 +130,7 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         rearmRequiredRef.current = false;
       }, COOLDOWN_MS);
     }, 500); // Show selection for 0.5 seconds before cooldown
-  }, [speak]);
+  }, [speak, selectionsPaused]);
 
   useEffect(() => {
     // Update current zone on gaze state changes
@@ -136,7 +141,11 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
       if (selectionState === 'dwelling' && dwellStartTimeRef.current) {
         const elapsed = Date.now() - dwellStartTimeRef.current;
         const progress = Math.min(elapsed / DWELL_TIME_MS, 1);
-        setDwellProgress(progress);
+
+        // Only update progress display if selections are not paused
+        if (!selectionsPaused) {
+          setDwellProgress(progress);
+        }
 
         console.log(`⏱️ Dwell progress: ${(progress * 100).toFixed(1)}% (${elapsed}ms / ${DWELL_TIME_MS}ms)`);
 
@@ -165,7 +174,7 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         rearmRequiredRef.current = false;
       }
       
-      if (isLookingAtOption && !rearmRequiredRef.current) {
+      if (isLookingAtOption && !rearmRequiredRef.current && !selectionsPaused) {
         if (gazeChanged || selectionState === 'idle') {
           // Start or restart dwell timer
           console.log(`👀 Starting dwell timer for ${lastGazeStateRef.current}`);
@@ -182,6 +191,12 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         setSelectionState('idle');
         setDwellProgress(0);
         dwellStartTimeRef.current = null;
+      } else if (selectionsPaused && selectionState === 'dwelling') {
+        // Selections paused, reset dwell
+        console.log('⏸️ Selections paused, resetting dwell');
+        setSelectionState('idle');
+        setDwellProgress(0);
+        dwellStartTimeRef.current = null;
       }
     }
 
@@ -192,7 +207,7 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [gazeState, selectionState, handleSelection, updateCurrentZone]);
+  }, [gazeState, selectionState, handleSelection, updateCurrentZone, selectionsPaused]);
 
   // Test speech synthesis on mount
   useEffect(() => {

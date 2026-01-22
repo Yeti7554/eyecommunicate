@@ -9,8 +9,9 @@ import { ErrorScreen } from './ErrorScreen';
 const NEUTRAL_ZONE_WIDTH_PERCENT = 0.5;
 
 export function EyeTrackingInterface() {
+  const [selectionsPaused, setSelectionsPaused] = useState(false);
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
-  const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState);
+  const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused);
 
   if (error) {
     return <ErrorScreen error={error} />;
@@ -61,8 +62,14 @@ export function EyeTrackingInterface() {
         <div className="mt-1 text-xs text-gray-300">
           Calibration: X-flip={getCoordinateFlipping().x ? 'ON' : 'OFF'}
           <br />
-          Press 'M' for mirror toggle
+          Selections: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}
         </div>
+        <button
+          onClick={() => setSelectionsPaused(!selectionsPaused)}
+          className={`mt-2 mr-1 px-2 py-1 rounded text-xs ${selectionsPaused ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+        >
+          {selectionsPaused ? 'Resume Selections' : 'Pause Selections'}
+        </button>
         <button
           onClick={() => {
             const current = getCoordinateFlipping();
