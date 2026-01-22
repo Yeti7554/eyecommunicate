@@ -12,8 +12,8 @@ interface UseDwellSelectionReturn {
 }
 
 // Configuration constants
-const DWELL_TIME_MS = 300; // Ultra-fast dwell time for sensitivity
-const COOLDOWN_MS = 500; // Quick cooldown
+const DWELL_TIME_MS = 600; // Balanced dwell time
+const COOLDOWN_MS = 800; // Standard cooldown
 
 export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn {
   const [selectionState, setSelectionState] = useState<SelectionState>('idle');
@@ -66,8 +66,18 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
 
     // Voice feedback when entering YES/NO zones
     if (newZone !== lastZoneRef.current && newZone !== 'NEUTRAL') {
-      console.log(`Entering ${newZone} zone - triggering voice feedback`);
-      speak(newZone.toLowerCase(), true); // High priority voice feedback
+      console.log(`🎯 ENTERING ${newZone} ZONE - VOICE FEEDBACK TRIGGERED`);
+      // Use a simpler, more reliable speech approach
+      try {
+        const utterance = new SpeechSynthesisUtterance(newZone.toLowerCase());
+        utterance.volume = 1;
+        utterance.rate = 1.5; // Fast and clear
+        utterance.pitch = 1.2; // Distinctive pitch
+        window.speechSynthesis.speak(utterance);
+        console.log(`✅ Speech synthesis called for: ${newZone.toLowerCase()}`);
+      } catch (error) {
+        console.error('❌ Speech synthesis failed:', error);
+      }
     }
 
     setCurrentZone(newZone);

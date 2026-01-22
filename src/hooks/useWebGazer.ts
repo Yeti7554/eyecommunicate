@@ -28,7 +28,7 @@ const NEUTRAL_ZONE_WIDTH = 0.02; // 2% neutral zone - minimal black bars
 const MIN_CONFIDENCE = 0.05; // Maximum sensitivity
 
 // Runtime coordinate system calibration
-let flipXCoordinates = true; // Flip X axis (left/right inversion fix) - ON by default
+let flipXCoordinates = false; // Flip X axis (left/right inversion fix) - DISABLED for centering test
 let flipYCoordinates = false; // Flip Y axis if needed (up/down inversion)
 
 // Exported functions for runtime control
@@ -126,33 +126,56 @@ export function useWebGazer(): UseWebGazerReturn {
         webgazerRef.current.setGazeListener((data: any, clock: any) => {
           if (!mounted || !data) return;
 
-          // Debug logging to see what WebGazer returns
+          // Reliable gaze tracking with proper coordinate handling
           console.log('Raw WebGazer data:', data);
-          console.log('Window size:', window.innerWidth, 'x', window.innerHeight);
 
-          // Handle different WebGazer data formats
+          // Handle WebGazer data formats reliably
           let gazeX, gazeY, confidence;
 
           if (typeof data === 'object' && data.x !== undefined && data.y !== undefined) {
+            // Standard WebGazer format
             gazeX = data.x;
             gazeY = data.y;
             confidence = data.confidence;
+            console.log(`Raw WebGazer coords: x=${gazeX.toFixed(3)}, y=${gazeY.toFixed(3)}`);
           } else if (Array.isArray(data) && data.length >= 2) {
+            // Array format [x, y]
             [gazeX, gazeY] = data;
+            console.log('Using array format');
           } else {
-            return; // Invalid data format
+            console.log('Invalid data format');
+            return;
           }
 
-          // WebGazer returns normalized coordinates (0-1) representing gaze position on screen
-          // Convert to screen pixel coordinates
-          let screenX = gazeX * window.innerWidth;
-          let screenY = gazeY * window.innerHeight;
+          // Handle coordinate conversion - WebGazer might return different formats
+          let screenX, screenY;
+
+          // Get viewport dimensions once
+          const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+          const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+
+          // Handle coordinate conversion based on format
+          if (gazeX > 10 || gazeY > 10) {
+            // Already pixel coordinates - use directly but ensure within viewport bounds
+            screenX = Math.max(0, Math.min(viewportWidth, gazeX));
+            screenY = Math.max(0, Math.min(viewportHeight, gazeY));
+            console.log('Detected pixel coordinates - using directly');
+          } else {
+            // Normalized coordinates (0-1) - convert to screen pixels
+            const clampedX = Math.max(0, Math.min(1, gazeX));
+            const clampedY = Math.max(0, Math.min(1, gazeY));
+
+            screenX = clampedX * viewportWidth;
+            screenY = clampedY * viewportHeight;
+            console.log(`Detected normalized coordinates - converting to pixels (${viewportWidth}x${viewportHeight})`);
+          }
 
           // Apply coordinate calibration (flip axes if needed for camera mirroring)
-          if (flipXCoordinates) screenX = window.innerWidth - screenX;
-          if (flipYCoordinates) screenY = window.innerHeight - screenY;
+          if (flipXCoordinates) screenX = viewportWidth - screenX;
+          if (flipYCoordinates) screenY = viewportHeight - screenY;
 
-          console.log(`Gaze: (${gazeX.toFixed(3)}, ${gazeY.toFixed(3)}) → Screen: (${screenX.toFixed(1)}, ${screenY.toFixed(1)})`);
+          // Show final results
+          console.log(`Final: Screen coords (${screenX.toFixed(1)}, ${screenY.toFixed(1)}) | Viewport: ${viewportWidth}x${viewportHeight}`);
 
           const gazeData: GazeData = {
             x: screenX,
@@ -162,6 +185,7 @@ export function useWebGazer(): UseWebGazerReturn {
 
           // Filter out low-confidence predictions
           if (gazeData.confidence !== undefined && gazeData.confidence < MIN_CONFIDENCE) {
+            console.log('Low confidence, skipping');
             return;
           }
 
@@ -171,7 +195,7 @@ export function useWebGazer(): UseWebGazerReturn {
           const newGazeState = determineGazeState(smoothedGaze.x);
           setGazeState(newGazeState);
 
-          // Temporarily disable eye position tracking to focus on gaze
+          // Keep eye positions null for now to focus on basic tracking
           setEyePositions({ left: null, right: null });
         });
         

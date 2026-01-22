@@ -78,15 +78,50 @@ export function EyeTrackingInterface() {
         </button>
         <button
           onClick={() => {
-            // Test speech synthesis
-            if ('speechSynthesis' in window) {
-              const utterance = new SpeechSynthesisUtterance('test speech');
+            // Test speech synthesis with clear message
+            try {
+              const utterance = new SpeechSynthesisUtterance('Voice test successful');
+              utterance.volume = 1;
+              utterance.rate = 1;
               window.speechSynthesis.speak(utterance);
+              console.log('🎤 Voice test triggered');
+            } catch (error) {
+              console.error('❌ Voice test failed:', error);
             }
           }}
-          className="mt-2 px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
+          className="mt-2 mr-1 px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
         >
           Test Voice
+        </button>
+        <button
+          onClick={() => {
+            // Manual zone test
+            console.log('🎯 Manual zone test - Current zone:', currentZone);
+            if (currentZone !== 'NEUTRAL') {
+              try {
+                const utterance = new SpeechSynthesisUtterance(`${currentZone.toLowerCase()} zone active`);
+                utterance.volume = 1;
+                utterance.rate = 1.2;
+                window.speechSynthesis.speak(utterance);
+              } catch (error) {
+                console.error('❌ Manual voice test failed:', error);
+              }
+            }
+          }}
+          className="mt-2 mr-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs"
+        >
+          Test Zone
+        </button>
+        <button
+          onClick={() => {
+            // Test center positioning
+            const centerX = (document.documentElement.clientWidth || window.innerWidth) / 2;
+            const centerY = (document.documentElement.clientHeight || window.innerHeight) / 2;
+            console.log(`🎯 Center test: Screen center should be at (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
+          }}
+          className="mt-2 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs"
+        >
+          Test Center
         </button>
       </div>
 
@@ -113,6 +148,7 @@ export function EyeTrackingInterface() {
           }}
         />
       )}
+
 
       {/* NO Zone (Left) - Swapped for correct eye tracking */}
       <SelectionZone
