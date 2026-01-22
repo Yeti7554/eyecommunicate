@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWebGazer, getCoordinateFlipping, setCoordinateFlipping } from '@/hooks/useWebGazer';
-import { useDwellSelection } from '@/hooks/useDwellSelection';
+import { useDwellSelection, getDwellTime, setDwellTime } from '@/hooks/useDwellSelection';
 import { SelectionZone } from './SelectionZone';
 import { NeutralZone } from './NeutralZone';
 import { LoadingScreen } from './LoadingScreen';
@@ -88,7 +88,7 @@ export function EyeTrackingInterface() {
         <div className="mt-1 text-xs text-gray-300">
           Mode: Desktop | Calibration: X-flip={getCoordinateFlipping().x ? 'ON' : 'OFF'}
           <br />
-          Selections: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}
+          Selections: {selectionsPaused ? 'PAUSED' : 'ACTIVE'} | Sensitivity: {getDwellTime()}ms
         </div>
         <button
           onClick={() => setSelectionsPaused(!selectionsPaused)}
@@ -147,6 +147,24 @@ export function EyeTrackingInterface() {
         >
           {isMobileMode ? 'Desktop Mode' : 'Mobile Mode'}
         </button>
+
+        {/* Sensitivity Slider */}
+        <div className="mt-2">
+          <div className="text-xs text-gray-300 mb-1">Sensitivity (Dwell Time)</div>
+          <input
+            type="range"
+            min="200"
+            max="5000"
+            step="100"
+            value={getDwellTime()}
+            onChange={(e) => setDwellTime(Number(e.target.value))}
+            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+          />
+          <div className="flex justify-between text-xs text-gray-400 mt-1">
+            <span>Fast (200ms)</span>
+            <span>Slow (5000ms)</span>
+          </div>
+        </div>
         <button
           onClick={() => {
             // Test center positioning

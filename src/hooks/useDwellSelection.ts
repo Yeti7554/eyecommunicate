@@ -11,9 +11,16 @@ interface UseDwellSelectionReturn {
   resetSelection: () => void;
 }
 
-// Configuration constants
-const DWELL_TIME_MS = 2000; // 2-second dwell time for deliberate selections
+// Configuration constants - now adjustable
+let DWELL_TIME_MS = 2000; // 2-second dwell time for deliberate selections
 const COOLDOWN_MS = 200; // Very short cooldown - allow quick repeated selections
+
+// Export functions for runtime adjustment
+export const getDwellTime = () => DWELL_TIME_MS;
+export const setDwellTime = (time: number) => {
+  DWELL_TIME_MS = Math.max(200, Math.min(5000, time)); // Clamp between 200ms and 5000ms
+  console.log(`Dwell time set to: ${DWELL_TIME_MS}ms`);
+};
 
 export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolean = false, voiceEnabled: boolean = true): UseDwellSelectionReturn {
   const [selectionState, setSelectionState] = useState<SelectionState>('idle');
@@ -27,6 +34,7 @@ export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolea
   const animationFrameRef = useRef<number | null>(null);
   const rearmRequiredRef = useRef(false);
   const lastZoneRef = useRef<'YES' | 'NO' | 'NEUTRAL'>('NEUTRAL');
+  const lastDwellTimeRef = useRef(DWELL_TIME_MS);
 
   const speak = useCallback((text: string, priority: boolean = false) => {
     console.log(`🎤 Attempting to speak: "${text}" (priority: ${priority})`);
@@ -144,14 +152,15 @@ export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolea
     const updateDwellProgress = () => {
       if (selectionState === 'dwelling' && dwellStartTimeRef.current) {
         const elapsed = Date.now() - dwellStartTimeRef.current;
-        const progress = Math.min(elapsed / DWELL_TIME_MS, 1);
+        const currentDwellTime = DWELL_TIME_MS; // Always use current value
+        const progress = Math.min(elapsed / currentDwellTime, 1);
 
         // Only update progress display if selections are not paused
         if (!selectionsPaused) {
           setDwellProgress(progress);
         }
 
-        console.log(`⏱️ Dwell progress: ${(progress * 100).toFixed(1)}% (${elapsed}ms / ${DWELL_TIME_MS}ms)`);
+        console.log(`⏱️ Dwell progress: ${(progress * 100).toFixed(1)}% (${elapsed}ms / ${currentDwellTime}ms)`);
 
         if (progress >= 1) {
           console.log('🎯 Dwell complete! Triggering selection.');
@@ -212,6 +221,26 @@ export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolea
       }
     };
   }, [gazeState, selectionState, handleSelection, updateCurrentZone, selectionsPaused]);
+
+  // Monitor dwell time changes and restart dwell if needed
+  useEffect(() => {
+    if (lastDwellTimeRef.current !== DWELL_TIME_MS) {
+      if (selectionState === 'dwelling' && dwellStartTimeRef.current) {
+        console.log(`Sensitivity changed from ${lastDwellTimeRef.current}ms to ${DWELL_TIME_MS}ms - restarting dwell`);
+        // Reset dwell to use new timing
+        setSelectionState('idle');
+        setDwellProgress(0);
+        dwellStartTimeRef.current = null;
+        // Cancel any ongoing animation
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = null;
+        }
+      }
+      console.log(`Sensitivity updated to ${DWELL_TIME_MS}ms`);
+    }
+    lastDwellTimeRef.current = DWELL_TIME_MS;
+  }, [DWELL_TIME_MS]);
 
   // Test speech synthesis on mount
   useEffect(() => {

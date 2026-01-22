@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useWebGazer, getCoordinateFlipping, setCoordinateFlipping } from '@/hooks/useWebGazer';
-import { useDwellSelection } from '@/hooks/useDwellSelection';
+import { useDwellSelection, getDwellTime, setDwellTime } from '@/hooks/useDwellSelection';
 
 export function MobileEyeTrackingInterface() {
   const [selectionsPaused, setSelectionsPaused] = useState(false);
@@ -117,22 +117,38 @@ export function MobileEyeTrackingInterface() {
               <span>Status: {isInitialized ? 'Active' : 'Init'}</span>
               <span>Zone: {currentZone}</span>
               <span>Mode: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}</span>
+              <span>Sens: {getDwellTime()}ms</span>
             </div>
           </div>
 
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center mb-2">
             <button
               onClick={() => setSelectionsPaused(!selectionsPaused)}
-              className={`px-3 py-1 rounded text-xs ${selectionsPaused ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}
+              className={`px-2 py-1 rounded text-xs ${selectionsPaused ? 'bg-red-600 hover:bg-red-700' : 'bg-orange-600 hover:bg-orange-700'}`}
             >
               {selectionsPaused ? 'Resume' : 'Pause'}
             </button>
             <button
               onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`px-3 py-1 rounded text-xs ${voiceEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+              className={`px-2 py-1 rounded text-xs ${voiceEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`}
             >
               Voice: {voiceEnabled ? 'ON' : 'OFF'}
             </button>
+            <button
+              onClick={() => setDwellTime(Math.max(200, getDwellTime() - 500))}
+              className="px-2 py-1 bg-orange-600 hover:bg-orange-700 rounded text-xs"
+            >
+              -500ms
+            </button>
+            <button
+              onClick={() => setDwellTime(Math.min(5000, getDwellTime() + 500))}
+              className="px-2 py-1 bg-orange-600 hover:bg-orange-700 rounded text-xs"
+            >
+              +500ms
+            </button>
+          </div>
+
+          <div className="flex gap-2 justify-center">
             <button
               onClick={() => {
                 const current = getCoordinateFlipping();
@@ -294,6 +310,7 @@ export function MobileEyeTrackingInterface() {
           <div>Status: {isInitialized ? 'Active' : 'Init'}</div>
           <div>Zone: {currentZone}</div>
           <div>Mode: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}</div>
+          <div className="text-xs">Sens: {getDwellTime()}ms</div>
           {isIOS && <div className="text-yellow-400 text-xs">iOS Mode</div>}
         </div>
 
@@ -319,6 +336,20 @@ export function MobileEyeTrackingInterface() {
           >
             Voice: {voiceEnabled ? 'ON' : 'OFF'}
           </button>
+          <div className="flex gap-1 w-full">
+            <button
+              onClick={() => setDwellTime(Math.max(200, getDwellTime() - 200))}
+              className="px-1 py-1 bg-orange-600 hover:bg-orange-700 rounded text-xs flex-1"
+            >
+              -200ms
+            </button>
+            <button
+              onClick={() => setDwellTime(Math.min(5000, getDwellTime() + 200))}
+              className="px-1 py-1 bg-orange-600 hover:bg-orange-700 rounded text-xs flex-1"
+            >
+              +200ms
+            </button>
+          </div>
           <button
             onClick={() => {
               try {
