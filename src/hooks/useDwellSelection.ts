@@ -7,35 +7,72 @@ interface UseDwellSelectionReturn {
   selectionState: SelectionState;
   selectedOption: 'YES' | 'NO' | null;
   dwellProgress: number; // 0 to 1
+  currentZone: 'YES' | 'NO' | 'NEUTRAL';
   resetSelection: () => void;
 }
 
 // Configuration constants
-const DWELL_TIME_MS = 900;
-const COOLDOWN_MS = 1000;
+const DWELL_TIME_MS = 300; // Ultra-fast dwell time for sensitivity
+const COOLDOWN_MS = 500; // Quick cooldown
 
 export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn {
   const [selectionState, setSelectionState] = useState<SelectionState>('idle');
   const [selectedOption, setSelectedOption] = useState<'YES' | 'NO' | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
-  
+  const [currentZone, setCurrentZone] = useState<'YES' | 'NO' | 'NEUTRAL'>('NEUTRAL');
+
   const dwellStartTimeRef = useRef<number | null>(null);
   const lastGazeStateRef = useRef<GazeState>('LOOKING_AT_NEITHER');
   const cooldownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const rearmRequiredRef = useRef(false);
+  const lastZoneRef = useRef<'YES' | 'NO' | 'NEUTRAL'>('NEUTRAL');
 
-  const speak = useCallback((text: string) => {
-    // Cancel any ongoing speech
-    window.speechSynthesis.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    utterance.volume = 1;
-    
-    window.speechSynthesis.speak(utterance);
+  const speak = useCallback((text: string, priority: boolean = false) => {
+    try {
+      // Cancel any ongoing speech for high priority messages
+      if (priority) {
+        window.speechSynthesis.cancel();
+      }
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = priority ? 1.2 : 1.0; // Faster for priority
+      utterance.pitch = 1.1; // Slightly higher pitch
+      utterance.volume = 0.8; // Good volume level
+
+      // Add event listeners for debugging
+      utterance.onstart = () => console.log(`Speaking: "${text}"`);
+      utterance.onerror = (e) => console.error('Speech error:', e);
+
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      console.error('Speech synthesis failed:', error);
+    }
   }, []);
+
+  // Track current zone and provide voice feedback
+  const updateCurrentZone = useCallback((gazeState: GazeState) => {
+    let newZone: 'YES' | 'NO' | 'NEUTRAL';
+    switch (gazeState) {
+      case 'LOOKING_AT_YES':
+        newZone = 'YES';
+        break;
+      case 'LOOKING_AT_NO':
+        newZone = 'NO';
+        break;
+      default:
+        newZone = 'NEUTRAL';
+    }
+
+    // Voice feedback when entering YES/NO zones
+    if (newZone !== lastZoneRef.current && newZone !== 'NEUTRAL') {
+      console.log(`Entering ${newZone} zone - triggering voice feedback`);
+      speak(newZone.toLowerCase(), true); // High priority voice feedback
+    }
+
+    setCurrentZone(newZone);
+    lastZoneRef.current = newZone;
+  }, [speak]);
 
   const resetSelection = useCallback(() => {
     setSelectionState('idle');
@@ -75,12 +112,16 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
   }, [speak]);
 
   useEffect(() => {
+    // Update current zone on gaze state changes
+    console.log('Gaze state changed:', gazeState);
+    updateCurrentZone(gazeState);
+
     const updateDwellProgress = () => {
       if (selectionState === 'dwelling' && dwellStartTimeRef.current) {
         const elapsed = Date.now() - dwellStartTimeRef.current;
         const progress = Math.min(elapsed / DWELL_TIME_MS, 1);
         setDwellProgress(progress);
-        
+
         if (progress >= 1) {
           const option = lastGazeStateRef.current === 'LOOKING_AT_YES' ? 'YES' : 'NO';
           handleSelection(option);
@@ -130,7 +171,17 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [gazeState, selectionState, handleSelection]);
+  }, [gazeState, selectionState, handleSelection, updateCurrentZone]);
+
+  // Test speech synthesis on mount
+  useEffect(() => {
+    // Test speech synthesis availability
+    if ('speechSynthesis' in window) {
+      console.log('Speech synthesis is available');
+    } else {
+      console.error('Speech synthesis not available');
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -149,6 +200,7 @@ export function useDwellSelection(gazeState: GazeState): UseDwellSelectionReturn
     selectionState,
     selectedOption,
     dwellProgress,
+    currentZone,
     resetSelection,
   };
 }
