@@ -4,9 +4,10 @@ import { useDwellSelection } from '@/hooks/useDwellSelection';
 
 export function MobileEyeTrackingInterface() {
   const [selectionsPaused, setSelectionsPaused] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isLandscapeLeft, setIsLandscapeLeft] = useState(false);
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
-  const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused);
+  const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused, voiceEnabled);
 
   // Detect orientation changes
   useEffect(() => {
@@ -112,6 +113,12 @@ export function MobileEyeTrackingInterface() {
               {selectionsPaused ? 'Resume' : 'Pause'}
             </button>
             <button
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className={`px-3 py-1 rounded text-xs ${voiceEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+            >
+              Voice: {voiceEnabled ? 'ON' : 'OFF'}
+            </button>
+            <button
               onClick={() => {
                 const current = getCoordinateFlipping();
                 setCoordinateFlipping(!current.x, current.y);
@@ -130,23 +137,50 @@ export function MobileEyeTrackingInterface() {
                   console.error('Voice test failed:', error);
                 }
               }}
-              className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded text-xs"
+              className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs"
             >
               Test Voice
             </button>
           </div>
         </div>
 
-        {/* Mobile Gaze Indicator */}
+        {/* Mobile Gaze Indicator - More Visible */}
         {gazePosition && (
-          <div
-            className="fixed w-6 h-6 bg-yellow-400 rounded-full border-3 border-white shadow-xl pointer-events-none z-50 animate-pulse"
-            style={{
-              left: `${gazePosition.x}px`,
-              top: `${gazePosition.y}px`,
-              transform: 'translate(-50%, -50%)',
-            }}
-          />
+          <>
+            {/* Main gaze indicator */}
+            <div
+              className="fixed w-8 h-8 bg-red-500 rounded-full border-4 border-white shadow-2xl pointer-events-none"
+              style={{
+                left: `${gazePosition.x}px`,
+                top: `${gazePosition.y}px`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 9999,
+                animation: 'pulse 1s infinite',
+              }}
+            />
+            {/* Secondary indicator for better visibility */}
+            <div
+              className="fixed w-12 h-12 border-4 border-red-500 rounded-full pointer-events-none opacity-50"
+              style={{
+                left: `${gazePosition.x}px`,
+                top: `${gazePosition.y}px`,
+                transform: 'translate(-50%, -50%)',
+                zIndex: 9998,
+              }}
+            />
+            {/* Debug text */}
+            <div
+              className="fixed bg-black text-white text-xs px-2 py-1 rounded pointer-events-none"
+              style={{
+                left: `${gazePosition.x + 20}px`,
+                top: `${gazePosition.y - 20}px`,
+                zIndex: 10000,
+                fontSize: '10px',
+              }}
+            >
+              {Math.round(gazePosition.x)}, {Math.round(gazePosition.y)}
+            </div>
+          </>
         )}
       </div>
     );
@@ -184,6 +218,12 @@ export function MobileEyeTrackingInterface() {
             Mirror
           </button>
           <button
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            className={`px-2 py-1 rounded text-xs w-full ${voiceEnabled ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+          >
+            Voice: {voiceEnabled ? 'ON' : 'OFF'}
+          </button>
+          <button
             onClick={() => {
               try {
                 const utterance = new SpeechSynthesisUtterance('Voice test');
@@ -193,7 +233,7 @@ export function MobileEyeTrackingInterface() {
                 console.error('Voice test failed:', error);
               }
             }}
-            className="px-2 py-1 bg-green-600 hover:bg-green-700 rounded text-xs w-full"
+            className="px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs w-full"
           >
             Test Voice
           </button>

@@ -15,7 +15,7 @@ interface UseDwellSelectionReturn {
 const DWELL_TIME_MS = 2000; // 2-second dwell time for deliberate selections
 const COOLDOWN_MS = 200; // Very short cooldown - allow quick repeated selections
 
-export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolean = false): UseDwellSelectionReturn {
+export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolean = false, voiceEnabled: boolean = true): UseDwellSelectionReturn {
   const [selectionState, setSelectionState] = useState<SelectionState>('idle');
   const [selectedOption, setSelectedOption] = useState<'YES' | 'NO' | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
@@ -81,7 +81,7 @@ export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolea
 
     setCurrentZone(newZone);
     lastZoneRef.current = newZone;
-  }, [speak]);
+  }, [speak, voiceEnabled]);
 
   const resetSelection = useCallback(() => {
     setSelectionState('idle');
@@ -108,9 +108,13 @@ export function useDwellSelection(gazeState: GazeState, selectionsPaused: boolea
     setSelectedOption(option);
     setDwellProgress(1);
 
-    // Speak the selection with clear, distinctive audio
-    console.log(`🔊 Speaking selection: ${option}`);
-    speak(option, false); // false = selection speech (not priority)
+    // Speak the selection with clear, distinctive audio (if voice enabled)
+    if (voiceEnabled) {
+      console.log(`🔊 Speaking selection: ${option}`);
+      speak(option, false); // false = selection speech (not priority)
+    } else {
+      console.log(`🔇 Voice disabled - skipping speech for: ${option}`);
+    }
 
     // Allow immediate reselection - no re-arm requirement
     rearmRequiredRef.current = false;
