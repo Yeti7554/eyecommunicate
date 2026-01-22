@@ -46,7 +46,7 @@ export function StartScreen({ onStart }: StartScreenProps) {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">2.</span>
-              <span>Hold your gaze for about 1 second</span>
+              <span>Hold your gaze for about 2 seconds</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-primary font-bold">3.</span>
