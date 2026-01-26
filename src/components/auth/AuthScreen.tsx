@@ -29,7 +29,7 @@ export function AuthScreen({ onAuthSuccess, onBack }: AuthScreenProps) {
 
     try {
       if (mode === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -37,10 +37,12 @@ export function AuthScreen({ onAuthSuccess, onBack }: AuthScreenProps) {
           },
         });
         if (error) throw error;
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to complete sign up.",
-        });
+        // If user is automatically signed in (no email confirmation), proceed
+        if (data.user && data.session) {
+          onAuthSuccess();
+        }
+        // If email confirmation is required, the user will need to check email
+        // but we don't show a toast since email confirmation is disabled
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
