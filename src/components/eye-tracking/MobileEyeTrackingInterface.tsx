@@ -5,6 +5,7 @@ import { LoadingScreen } from './LoadingScreen';
 import { ErrorScreen } from './ErrorScreen';
 
 export function MobileEyeTrackingInterface() {
+  // ALL HOOKS MUST BE CALLED FIRST (before any conditional returns)
   const [selectionsPaused, setSelectionsPaused] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isLandscapeLeft, setIsLandscapeLeft] = useState(false);
@@ -13,24 +14,17 @@ export function MobileEyeTrackingInterface() {
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
   const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused, voiceEnabled);
 
-  // Debug: Log gazePosition changes for iOS Chrome debugging
+  // Debug: Log gazePosition changes for iOS Chrome debugging (throttled)
   useEffect(() => {
-    if (gazePosition) {
-      console.log(`📱 Mobile: Gaze position updated: (${gazePosition.x.toFixed(1)}, ${gazePosition.y.toFixed(1)}) | State: ${gazeState} | Zone: ${currentZone}`);
-    } else {
-      console.log(`📱 Mobile: No gaze position | Initialized: ${isInitialized} | Loading: ${isLoading} | Error: ${error}`);
-    }
-  }, [gazePosition, gazeState, currentZone, isInitialized, isLoading, error]);
-
-  // Handle error state
-  if (error) {
-    return <ErrorScreen error={error} />;
-  }
-
-  // Handle loading state
-  if (isLoading || !isInitialized) {
-    return <LoadingScreen />;
-  }
+    if (!gazePosition) return;
+    
+    // Throttle logging to avoid console spam
+    const timeoutId = setTimeout(() => {
+      console.log(`📱 Mobile: Gaze (${gazePosition.x.toFixed(0)}, ${gazePosition.y.toFixed(0)}) | ${gazeState} | ${currentZone}`);
+    }, 500); // Log max once per 500ms
+    
+    return () => clearTimeout(timeoutId);
+  }, [gazePosition?.x, gazePosition?.y, gazeState, currentZone]);
 
   // Detect iOS devices
   useEffect(() => {
@@ -57,6 +51,15 @@ export function MobileEyeTrackingInterface() {
       window.removeEventListener('resize', checkOrientation);
     };
   }, []);
+
+  // NOW handle error/loading states AFTER all hooks
+  if (error) {
+    return <ErrorScreen error={error} />;
+  }
+
+  if (isLoading || !isInitialized) {
+    return <LoadingScreen />;
+  }
 
   // Render different layouts based on orientation
   if (isLandscapeLeft) {
