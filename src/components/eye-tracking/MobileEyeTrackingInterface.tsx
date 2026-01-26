@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useWebGazer, getCoordinateFlipping, setCoordinateFlipping } from '@/hooks/useWebGazer';
 import { useDwellSelection, getDwellTime, setDwellTime } from '@/hooks/useDwellSelection';
+import { LoadingScreen } from './LoadingScreen';
+import { ErrorScreen } from './ErrorScreen';
 
 export function MobileEyeTrackingInterface() {
   const [selectionsPaused, setSelectionsPaused] = useState(false);
@@ -10,6 +12,25 @@ export function MobileEyeTrackingInterface() {
 
   const { gazeState, isInitialized, isLoading, error, gazePosition, eyePositions } = useWebGazer();
   const { selectionState, selectedOption, dwellProgress, currentZone } = useDwellSelection(gazeState, selectionsPaused, voiceEnabled);
+
+  // Debug: Log gazePosition changes for iOS Chrome debugging
+  useEffect(() => {
+    if (gazePosition) {
+      console.log(`📱 Mobile: Gaze position updated: (${gazePosition.x.toFixed(1)}, ${gazePosition.y.toFixed(1)}) | State: ${gazeState} | Zone: ${currentZone}`);
+    } else {
+      console.log(`📱 Mobile: No gaze position | Initialized: ${isInitialized} | Loading: ${isLoading} | Error: ${error}`);
+    }
+  }, [gazePosition, gazeState, currentZone, isInitialized, isLoading, error]);
+
+  // Handle error state
+  if (error) {
+    return <ErrorScreen error={error} />;
+  }
+
+  // Handle loading state
+  if (isLoading || !isInitialized) {
+    return <LoadingScreen />;
+  }
 
   // Detect iOS devices
   useEffect(() => {
@@ -113,11 +134,17 @@ export function MobileEyeTrackingInterface() {
                 </div>
               )}
             </div>
-            <div className="flex gap-2 text-xs">
+            <div className="flex gap-2 text-xs flex-wrap">
               <span>Status: {isInitialized ? 'Active' : 'Init'}</span>
               <span>Zone: {currentZone}</span>
               <span>Mode: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}</span>
               <span>Sens: {getDwellTime()}ms</span>
+              {gazePosition && (
+                <span>Gaze: ({Math.round(gazePosition.x)}, {Math.round(gazePosition.y)})</span>
+              )}
+              {!gazePosition && isInitialized && (
+                <span className="text-yellow-400">⚠️ No gaze data</span>
+              )}
             </div>
           </div>
 
@@ -217,80 +244,8 @@ export function MobileEyeTrackingInterface() {
     );
   }
 
-  // iOS Fallback: Touch-based controls if eye tracking fails
-  if (isIOS && !isInitialized && !isLoading) {
-    return (
-      <div className="fixed inset-0 bg-black text-white flex flex-col items-center justify-center p-4">
-        <div className="text-center mb-8">
-          <div className="text-2xl font-bold mb-4">iOS Eye Tracking Limited</div>
-          <div className="text-gray-300 mb-6">
-            WebGazer has limited support on iOS Safari.<br/>
-            Try using touch controls instead:
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 w-full max-w-xs">
-          <button
-            onClick={() => {
-              // Simulate YES selection
-              console.log('Touch YES selected');
-              if (voiceEnabled) {
-                try {
-                  const utterance = new SpeechSynthesisUtterance('YES');
-                  window.speechSynthesis.speak(utterance);
-                } catch (e) {
-                  console.error('Speech failed:', e);
-                }
-              }
-            }}
-            className="bg-green-600 hover:bg-green-700 text-white py-6 px-4 rounded-lg text-xl font-bold transition-colors"
-          >
-            ✅ YES
-          </button>
-
-          <button
-            onClick={() => {
-              // Simulate NO selection
-              console.log('Touch NO selected');
-              if (voiceEnabled) {
-                try {
-                  const utterance = new SpeechSynthesisUtterance('NO');
-                  window.speechSynthesis.speak(utterance);
-                } catch (e) {
-                  console.error('Speech failed:', e);
-                }
-              }
-            }}
-            className="bg-red-600 hover:bg-red-700 text-white py-6 px-4 rounded-lg text-xl font-bold transition-colors"
-          >
-            ❌ NO
-          </button>
-
-          <div className="flex gap-2 mt-4">
-            <button
-              onClick={() => setVoiceEnabled(!voiceEnabled)}
-              className={`flex-1 py-2 px-3 rounded text-sm ${voiceEnabled ? 'bg-green-600' : 'bg-gray-600'}`}
-            >
-              Voice: {voiceEnabled ? 'ON' : 'OFF'}
-            </button>
-            <button
-              onClick={() => setIsIOS(false)} // Allow trying eye tracking anyway
-              className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-700 rounded text-sm"
-            >
-              Try Eye Tracking
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-8 text-center text-sm text-gray-400">
-          <div>iOS Safari Limitations:</div>
-          <div>• Reduced camera access</div>
-          <div>• Limited WebGL support</div>
-          <div>• Alternative browsers may work better</div>
-        </div>
-      </div>
-    );
-  }
+  // Note: Removed iOS fallback check - allow eye tracking to work on iOS Chrome
+  // The loading/error screens will handle initialization issues
 
   // Portrait mode (default) - debug panel on left
   return (
@@ -311,6 +266,11 @@ export function MobileEyeTrackingInterface() {
           <div>Zone: {currentZone}</div>
           <div>Mode: {selectionsPaused ? 'PAUSED' : 'ACTIVE'}</div>
           <div className="text-xs">Sens: {getDwellTime()}ms</div>
+          {gazePosition ? (
+            <div className="text-xs">Gaze: ({Math.round(gazePosition.x)}, {Math.round(gazePosition.y)})</div>
+          ) : (
+            <div className="text-yellow-400 text-xs">⚠️ No gaze</div>
+          )}
           {isIOS && <div className="text-yellow-400 text-xs">iOS Mode</div>}
         </div>
 
