@@ -1,14 +1,33 @@
 import { motion } from 'framer-motion';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, LogOut } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 interface StartScreenProps {
   onStart: () => void;
+  user: User | null;
 }
 
-export function StartScreen({ onStart }: StartScreenProps) {
+export function StartScreen({ onStart, user }: StartScreenProps) {
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
   return (
     <div className="fixed inset-0 bg-[#1C1C1C] flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 min-h-screen">
+      {/* Sign Out Button - Top Right */}
+      {user && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          onClick={handleSignOut}
+          className="absolute top-4 right-4 sm:top-6 sm:right-6 px-4 py-2 text-white/50 hover:text-white/80 transition-colors text-xs sm:text-sm font-sans flex items-center gap-2 border border-white/20 hover:border-white/40 rounded-full"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </motion.button>
+      )}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
