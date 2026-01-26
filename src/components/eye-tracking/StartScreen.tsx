@@ -67,6 +67,11 @@ export function StartScreen({ onStart }: StartScreenProps) {
         <p className="text-sm text-muted-foreground">
           Best used on MacBook Air in Chrome or Safari
         </p>
+        
+        {/* Version Number */}
+        <p className="text-xs text-muted-foreground/60 mt-4">
+          Version 0.1
+        </p>
       </motion.div>
     </div>
   );
