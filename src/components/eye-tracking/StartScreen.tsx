@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Maximize2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface StartScreenProps {
   onStart: () => void;
@@ -61,6 +62,21 @@ export function StartScreen({ onStart }: StartScreenProps) {
           Start Eye Tracking
         </motion.button>
         
+        {/* How to Use Link */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.9 }}
+          className="mt-4 sm:mt-5"
+        >
+          <Link
+            to="/how-to-use"
+            className="text-white/40 hover:text-white/70 transition-colors text-xs sm:text-sm font-sans underline decoration-white/20 hover:decoration-white/50"
+          >
+            How to Use
+          </Link>
+        </motion.div>
+        
         {/* Featured/Info Section - Mobile Responsive */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -72,13 +88,16 @@ export function StartScreen({ onStart }: StartScreenProps) {
             Designed for accessibility
           </p>
           <div className="text-white/60 text-xs sm:text-sm font-sans">
-            Desktop only
+            Desktop and mobile supported
           </div>
           
-          {/* Version Number */}
-          <p className="text-white/40 text-xs font-sans mt-1 sm:mt-2">
-            Version 0.1
-          </p>
+          {/* Version Number - Clickable */}
+          <Link
+            to="/changelog"
+            className="text-white/40 hover:text-white/70 transition-colors text-xs font-sans mt-1 sm:mt-2 underline decoration-white/20 hover:decoration-white/50"
+          >
+            Version 0.2
+          </Link>
         </motion.div>
       </motion.div>
     </div>
