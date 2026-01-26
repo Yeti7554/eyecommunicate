@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import { Eye, Maximize2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Maximize2 } from 'lucide-react';
 
 interface StartScreenProps {
   onStart: () => void;
@@ -8,70 +7,79 @@ interface StartScreenProps {
 
 export function StartScreen({ onStart }: StartScreenProps) {
   return (
-    <div className="fixed inset-0 bg-background flex flex-col items-center justify-center p-8">
+    <div className="fixed inset-0 bg-[#1C1C1C] flex flex-col items-center justify-center p-8 min-h-screen">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center gap-8 max-w-2xl text-center"
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="flex flex-col items-center gap-12 max-w-4xl text-center px-4"
       >
-        <motion.div
-          animate={{
-            scale: [1, 1.05, 1],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: 'easeInOut',
+        {/* Main Title - Large, Bold, Accent Color */}
+        <motion.h1
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-7xl md:text-8xl lg:text-9xl font-bold tracking-tight"
+          style={{
+            fontFamily: 'Georgia, serif',
+            color: 'hsl(142, 76%, 45%)',
+            textShadow: '0 0 40px rgba(16, 185, 129, 0.3)',
           }}
         >
-          <Eye className="w-32 h-32 text-primary" />
-        </motion.div>
+          EyeCommunicate
+        </motion.h1>
         
-        <div className="flex flex-col items-center gap-4">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground">
-            EyeCommunicate
-          </h1>
-          <p className="text-xl text-muted-foreground">
-            Communicate YES or NO using only your eyes
-          </p>
-        </div>
+        {/* Sub-heading - Elegant Serif */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="text-2xl md:text-3xl text-white/90 font-serif italic max-w-2xl leading-relaxed"
+        >
+          An assistive communication tool for users with limited motor control.
+        </motion.p>
         
-        <div className="flex flex-col items-start gap-3 text-left bg-card p-6 rounded-xl border border-border">
-          <h2 className="text-lg font-semibold text-foreground">How it works:</h2>
-          <ul className="text-muted-foreground space-y-2">
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">1.</span>
-              <span>Look at the <span className="text-primary font-semibold">YES</span> side (left) or <span className="text-secondary font-semibold">NO</span> side (right)</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">2.</span>
-              <span>Hold your gaze for about 2 seconds</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-primary font-bold">3.</span>
-              <span>The app will speak your selection aloud</span>
-            </li>
-          </ul>
-        </div>
+        {/* Body Paragraph - Clean Sans-serif */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="text-base md:text-lg text-white/70 max-w-xl leading-relaxed font-sans"
+        >
+          Communicate YES or NO answers using only your eye gaze. Look at the YES or NO zone, hold your gaze for 2 seconds, and the app will speak your selection aloud.
+        </motion.p>
         
-        <Button
+        {/* Call-to-Action Button - Minimal White with Border */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
           onClick={onStart}
-          size="lg"
-          className="text-xl px-8 py-6 gap-3"
+          className="mt-8 px-12 py-4 bg-white text-black border-2 border-black rounded-full font-semibold text-sm tracking-wider uppercase hover:bg-white/95 transition-all duration-200 flex items-center gap-3"
         >
-          <Maximize2 className="w-6 h-6" />
-          Start Fullscreen
-        </Button>
+          <Maximize2 className="w-5 h-5" />
+          Start Eye Tracking
+        </motion.button>
         
-        <p className="text-sm text-muted-foreground">
-          Best used on MacBook Air in Chrome or Safari
-        </p>
-        
-        {/* Version Number */}
-        <p className="text-xs text-muted-foreground/60 mt-4">
-          Version 0.1
-        </p>
+        {/* Featured/Info Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1 }}
+          className="mt-16 flex flex-col items-center gap-6"
+        >
+          <p className="text-white/50 text-sm font-serif italic" style={{ fontFamily: 'Georgia, serif' }}>
+            Designed for accessibility
+          </p>
+          <div className="text-white/60 text-sm font-sans">
+            Desktop only
+          </div>
+          
+          {/* Version Number */}
+          <p className="text-white/40 text-xs font-sans mt-2">
+            Version 0.1
+          </p>
+        </motion.div>
       </motion.div>
     </div>
   );
