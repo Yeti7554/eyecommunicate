@@ -123,25 +123,6 @@ export function EyeTrackingInterface() {
           Test Voice
         </button>
         <button
-          onClick={() => {
-            // Manual zone test
-            console.log('🎯 Manual zone test - Current zone:', currentZone);
-            if (currentZone !== 'NEUTRAL') {
-              try {
-                const utterance = new SpeechSynthesisUtterance(`${currentZone.toLowerCase()} zone active`);
-                utterance.volume = 1;
-                utterance.rate = 1.2;
-                window.speechSynthesis.speak(utterance);
-              } catch (error) {
-                console.error('❌ Manual voice test failed:', error);
-              }
-            }
-          }}
-          className="mt-2 mr-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs"
-        >
-          Test Zone
-        </button>
-        <button
           onClick={() => setIsMobileMode(!isMobileMode)}
           className={`mt-2 mr-1 px-2 py-1 rounded text-xs ${isMobileMode ? 'bg-purple-600 hover:bg-purple-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
         >
@@ -165,17 +146,6 @@ export function EyeTrackingInterface() {
             <span>Slow (5000ms)</span>
           </div>
         </div>
-        <button
-          onClick={() => {
-            // Test center positioning
-            const centerX = (document.documentElement.clientWidth || window.innerWidth) / 2;
-            const centerY = (document.documentElement.clientHeight || window.innerHeight) / 2;
-            console.log(`🎯 Center test: Screen center should be at (${centerX.toFixed(1)}, ${centerY.toFixed(1)})`);
-          }}
-          className="mt-2 px-2 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs"
-        >
-          Test Center
-        </button>
       </div>
 
       {/* Gaze Direction Indicator (MAIN MARKER - where eyes are looking) */}
