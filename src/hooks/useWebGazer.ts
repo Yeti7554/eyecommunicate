@@ -31,12 +31,27 @@ const MIN_CONFIDENCE = 0.01; // Maximum sensitivity - almost no filtering
 let flipXCoordinates = false; // Flip X axis (left/right inversion fix) - DISABLED for centering test
 let flipYCoordinates = false; // Flip Y axis if needed (up/down inversion)
 
+// Store reference to clear gaze history when flipping changes
+let clearGazeHistoryCallback: (() => void) | null = null;
+
 // Exported functions for runtime control
 export const getCoordinateFlipping = () => ({ x: flipXCoordinates, y: flipYCoordinates });
 export const setCoordinateFlipping = (x: boolean, y: boolean) => {
+  const wasFlipped = flipXCoordinates;
   flipXCoordinates = x;
   flipYCoordinates = y;
   console.log(`Coordinate flipping updated: X=${x}, Y=${y}`);
+  
+  // Clear gaze history when flipping changes to prevent stale data
+  if (clearGazeHistoryCallback) {
+    clearGazeHistoryCallback();
+    console.log('🔄 Cleared gaze history due to coordinate flip change');
+  }
+};
+
+// Function to register clear callback
+export const registerClearGazeHistory = (callback: () => void) => {
+  clearGazeHistoryCallback = callback;
 };
 
 export function useWebGazer(): UseWebGazerReturn {
@@ -52,6 +67,22 @@ export function useWebGazer(): UseWebGazerReturn {
 
   const gazeHistoryRef = useRef<GazeData[]>([]);
   const webgazerRef = useRef<any>(null);
+
+  // Clear gaze history function
+  const clearGazeHistory = useCallback(() => {
+    gazeHistoryRef.current = [];
+    setGazePosition(null);
+    setGazeState('LOOKING_AT_NEITHER');
+    console.log('🧹 Gaze history cleared');
+  }, []);
+
+  // Register clear function for coordinate flipping
+  useEffect(() => {
+    registerClearGazeHistory(clearGazeHistory);
+    return () => {
+      registerClearGazeHistory(() => {});
+    };
+  }, [clearGazeHistory]);
 
   const calculateSmoothedGaze = useCallback((newGaze: GazeData): GazeData => {
     gazeHistoryRef.current.push(newGaze);
@@ -142,6 +173,12 @@ export function useWebGazer(): UseWebGazerReturn {
 
         webgazerRef.current.setGazeListener(null); // Clear any existing listener first
         
+        // Clear gaze history on initialization to ensure fresh start
+        gazeHistoryRef.current = [];
+        setGazePosition(null);
+        setGazeState('LOOKING_AT_NEITHER');
+        console.log('🔄 Initialized WebGazer - cleared gaze history and reset state');
+        
         // Set gaze listener
         webgazerRef.current.setGazeListener((data: any, clock: any) => {
           if (!mounted || !data) return;
@@ -191,8 +228,17 @@ export function useWebGazer(): UseWebGazerReturn {
           }
 
           // Apply coordinate calibration (flip axes if needed for camera mirroring)
-          if (flipXCoordinates) screenX = viewportWidth - screenX;
-          if (flipYCoordinates) screenY = viewportHeight - screenY;
+          // Read current flip state fresh each time (don't cache)
+          const currentFlipX = flipXCoordinates;
+          const currentFlipY = flipYCoordinates;
+          
+          if (currentFlipX) screenX = viewportWidth - screenX;
+          if (currentFlipY) screenY = viewportHeight - screenY;
+          
+          // Log coordinate flipping application for debugging
+          if (currentFlipX || currentFlipY) {
+            console.log(`🔄 Applied coordinate flipping: X=${currentFlipX}, Y=${currentFlipY}`);
+          }
 
           // Show final results
           console.log(`Final: Screen coords (${screenX.toFixed(1)}, ${screenY.toFixed(1)}) | Viewport: ${viewportWidth}x${viewportHeight}`);
@@ -222,9 +268,19 @@ export function useWebGazer(): UseWebGazerReturn {
         // Start webgazer
         await webgazerRef.current.begin();
         
+        // Small delay to ensure WebGazer is fully initialized before processing gaze data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Force a state update to ensure coordinate flipping is applied from the start
         if (mounted) {
+          // Clear any initial gaze data to ensure fresh start
+          gazeHistoryRef.current = [];
+          setGazePosition(null);
+          setGazeState('LOOKING_AT_NEITHER');
+          
           setIsInitialized(true);
           setIsLoading(false);
+          console.log(`✅ WebGazer initialized with coordinate flipping: X=${flipXCoordinates}, Y=${flipYCoordinates}`);
         }
       } catch (err) {
         if (mounted) {
