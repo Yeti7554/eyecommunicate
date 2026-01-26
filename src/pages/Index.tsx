@@ -40,7 +40,7 @@ export default function Index() {
   }
 
   if (!hasStarted) {
-    return <StartScreen onStart={handleStart} />;
+    return <StartScreen onStart={handleStart} user={user} />;
   }
 
   return <EyeTrackingInterface />;
